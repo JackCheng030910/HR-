@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="intern">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="实习能量站 - 业务部新人成长导航智能看板，帮助实习生、导师和HR高效协同">
+  <title>实习能量站 · 业务部新人成长导航智能看板</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ============ 登录系统遮罩 ============ -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-card animate-in">
+      <div class="login-logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">实习能量站</span>
+      </div>
+      <h2 class="login-title">新人成长导航智能看板</h2>
+      <p class="login-subtitle" id="loginSubtitle">请选择您的登录体验方式</p>
+      
+      <div class="login-tabs" id="loginTabs">
+        <button class="login-tab active" id="tabEmail">邮箱登录</button>
+        <button class="login-tab" id="tabGuest">游客体验</button>
+      </div>
+      
+      <!-- 1. 邮箱登录表单 -->
+      <div class="login-form-group" id="emailLoginForm">
+        <div class="form-group">
+          <label class="form-label">电子邮箱</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="demo@tencent.com / 您的注册邮箱" value="hr@tencent.com" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">登录密码</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="默认密码: 123456" value="123456" required autocomplete="off">
+          <span class="input-error" id="loginError"></span>
+        </div>
+        <button class="btn btn-primary w-full" id="btnEmailLogin">登录进入</button>
+        <div class="login-tip" style="font-size: var(--text-xs); color: rgba(232, 234, 237, 0.6); margin-top: 12px; text-align: center; background: rgba(0, 82, 217, 0.12); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px dashed rgba(0, 82, 217, 0.3); line-height: 1.4;">
+          💡 官方测试账号：<strong>hr@tencent.com</strong><br>密码：<strong>123456</strong> (已自动填入，可直接登录)
+        </div>
+        <div style="text-align: center; margin-top: 12px;">
+          <a href="javascript:void(0)" id="linkToRegister" class="text-sm font-semibold" style="color:var(--primary-light)">没有账号？立即注册</a>
+        </div>
+      </div>
+
+      <!-- 2. 邮箱注册表单 (默认隐藏) -->
+      <div class="login-form-group hidden" id="emailRegisterForm">
+        <div class="form-group">
+          <label class="form-label">个性昵称</label>
+          <input type="text" id="registerName" class="form-input" placeholder="例如：张明轩 / 腾讯HR" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">电子邮箱</label>
+          <input type="email" id="registerEmail" class="form-input" placeholder="请输入您的邮箱地址" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">邮箱验证码</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+            <input type="text" id="registerCode" class="form-input" placeholder="6位验证码" required autocomplete="off" style="flex: 1;">
+            <button type="button" class="btn btn-ghost" id="btnSendCode" style="padding: 8px 12px; white-space: nowrap; font-size: 13px;">获取验证码</button>
+          </div>
+          <span class="input-helper" style="font-size: var(--text-xs); color: rgba(232, 234, 237, 0.4); display: block; line-height: 1.4;">
+            💡 获取后，测试验证码将在右上角弹出，复制填入即可
+          </span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">设置密码</label>
+          <input type="password" id="registerPassword" class="form-input" placeholder="至少6位字符" required autocomplete="off">
+          <span class="input-error" id="registerError"></span>
+        </div>
+        <button class="btn btn-primary w-full" id="btnEmailRegister">完成注册</button>
+        <div style="text-align: center; margin-top: 12px;">
+          <a href="javascript:void(0)" id="linkToLogin" class="text-sm font-semibold" style="color:var(--primary-light)">已有账号？返回登录</a>
+        </div>
+      </div>
+      
+      <!-- 3. 游客登录表单 (默认隐藏) -->
+      <div class="login-form-group hidden" id="guestLoginForm">
+        <p class="guest-desc">您将以【游客】身份进入系统，可以浏览全功能看板、与导师AI助手互动并查看全局数据。</p>
+        <button class="btn btn-primary w-full" id="btnGuestLogin">游客快速进入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 顶部导航栏 ============ -->
+  <header class="top-nav" id="topNav">
+    <div class="top-nav-left">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">实习能量站</span>
+      </div>
+    </div>
+
+    <div class="top-nav-center">
+      <div class="role-switcher" id="roleSwitcher">
+        <button class="role-btn active" data-role="intern">
+          <span class="role-icon">👨‍🎓</span>
+          <span class="role-label">实习生</span>
+        </button>
+        <button class="role-btn" data-role="mentor">
+          <span class="role-icon">👨‍🏫</span>
+          <span class="role-label">导师</span>
+        </button>
+        <button class="role-btn" data-role="hr">
+          <span class="role-icon">👩‍💼</span>
+          <span class="role-label">HR</span>
+        </button>
+        <div class="role-slider" id="roleSlider"></div>
+      </div>
+    </div>
+
+    <div class="top-nav-right">
+      <div class="nav-actions">
+        <button class="nav-btn" title="AI 助手 (Ctrl+K)" id="navAiBtn">
+          <span>🤖</span>
+        </button>
+        <button class="nav-btn" title="通知">
+          <span>🔔</span>
+          <span class="notification-dot"></span>
+        </button>
+      </div>
+      <div class="user-profile dropdown" id="userProfileDropdown">
+        <div class="user-profile-trigger" id="userProfileTrigger" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <span class="avatar-sm">👤</span>
+          <span class="user-name" id="currentUserName">Demo 用户</span>
+        </div>
+        <div class="dropdown-menu">
+          <div class="dropdown-item" id="btnLogout" style="color:var(--danger)">🚪 退出登录</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 主体布局 ============ -->
+  <div class="app-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3 class="sidebar-title" id="sidebarTitle">实习生工作台</h3>
+      </div>
+      <nav class="sidebar-nav">
+        <ul class="sidebar-menu" id="sidebarMenu">
+          <!-- Dynamic menu items rendered by app.js -->
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-info">
+          <div class="info-label">数据更新</div>
+          <div class="info-value" id="lastUpdate">刚刚</div>
+        </div>
+        <div class="sidebar-brand">
+          <span class="brand-text">Powered by AI</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content" id="mainContent">
+      <!-- Dynamic content rendered by app.js -->
+      <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ AI 助手由 ai-assistant.js 动态注入 ============ -->
+
+  <!-- ============ 全局消息通知 (Toast) ============ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ============ Scripts ============ -->
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/ai-assistant.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
